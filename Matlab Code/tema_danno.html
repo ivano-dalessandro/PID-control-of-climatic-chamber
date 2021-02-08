@@ -1,0 +1,160 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>tema_danno</title><meta name="generator" content="MATLAB 9.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-12-17"><meta name="DC.source" content="tema_danno.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput">delete(instrfind);
+
+FGEN = visa(<span class="string">'ni'</span>, <span class="string">'GPIB0::2::INSTR'</span>); <span class="comment">%definiamo il generatore di funzione</span>
+DMM = visa(<span class="string">'ni'</span>, <span class="string">'GPIB0::3::INSTR'</span>); <span class="comment">%definiamo il multimetro utilizzato per le misure di tensione</span>
+
+fopen(FGEN); <span class="comment">%accendiamo il generatore di funzione</span>
+fopen(DMM); <span class="comment">%accendiamo il multimetro</span>
+
+query(FGEN, <span class="string">'*idn?'</span>)
+query(DMM, <span class="string">'*idn?'</span>)
+
+N = 100; <span class="comment">%numero di campioni di tensione di ingresso</span>
+<span class="comment">%Definiamo il range di tensione di ingresso permesso dal dimmer elettronico</span>
+Vmin = 0; <span class="comment">%limite inferiore del range di tensione</span>
+Vmax = 10; <span class="comment">%limite superiore del range di tensione</span>
+Vinput = linspace(Vmin, Vmax, N); <span class="comment">%definiamo la tensione di alimentazione in ingresso al dimmer</span>
+Vout = NaN*zeros(size(Vinput)); <span class="comment">%inizializziamo il vettore che conterr&agrave; i valori misurati di tensione in uscita dal dimmer</span>
+                                <span class="comment">%mediante multimetro AGILENT</span>
+
+fprintf(FGEN, <span class="string">'APPLY:DC DEF,DEF,0'</span>);
+<span class="keyword">for</span> k = 1:N
+    comm = sprintf(<span class="string">'APPLY:DC DEF,DEF,%6.2f'</span>,Vinput(k));
+    fprintf(FGEN, comm);
+    pause(0.1);
+    Vout(k) = query(DMM, <span class="string">'MEAS:VOLT:AC?'</span>,<span class="string">'%s'</span>,<span class="string">'%f'</span>);
+    plot(Vinput, Vout, <span class="string">'o-'</span>);
+    hold <span class="string">on</span>
+<span class="keyword">end</span>
+title(<span class="string">'Curva caratteristica del dimmer'</span>);
+
+
+fprintf(FGEN, <span class="string">'APPLY:DC DEF,DEF,0'</span>);
+
+
+
+fclose(FGEN); <span class="comment">%spegniamo il generatore di funzione</span>
+fclose(DMM); <span class="comment">%spegniamo il multimetro</span>
+</pre><pre class="codeoutput">
+ans =
+
+    'HEWLETT-PACKARD,33120A,0,10.0-5.0-1.0
+     '
+
+
+ans =
+
+    'HEWLETT-PACKARD,34401A,0,10-5-2
+     '
+
+</pre><img vspace="5" hspace="5" src="tema_danno_01.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2019a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+delete(instrfind);
+
+FGEN = visa('ni', 'GPIB0::2::INSTR'); %definiamo il generatore di funzione
+DMM = visa('ni', 'GPIB0::3::INSTR'); %definiamo il multimetro utilizzato per le misure di tensione
+
+fopen(FGEN); %accendiamo il generatore di funzione
+fopen(DMM); %accendiamo il multimetro 
+
+query(FGEN, '*idn?')
+query(DMM, '*idn?')
+
+N = 100; %numero di campioni di tensione di ingresso
+%Definiamo il range di tensione di ingresso permesso dal dimmer elettronico
+Vmin = 0; %limite inferiore del range di tensione
+Vmax = 10; %limite superiore del range di tensione
+Vinput = linspace(Vmin, Vmax, N); %definiamo la tensione di alimentazione in ingresso al dimmer
+Vout = NaN*zeros(size(Vinput)); %inizializziamo il vettore che conterrà i valori misurati di tensione in uscita dal dimmer 
+                                %mediante multimetro AGILENT
+                                
+fprintf(FGEN, 'APPLY:DC DEF,DEF,0');
+for k = 1:N
+    comm = sprintf('APPLY:DC DEF,DEF,%6.2f',Vinput(k));
+    fprintf(FGEN, comm);
+    pause(0.1);
+    Vout(k) = query(DMM, 'MEAS:VOLT:AC?','%s','%f');
+    plot(Vinput, Vout, 'o-');
+    hold on
+end
+title('Curva caratteristica del dimmer');
+
+
+fprintf(FGEN, 'APPLY:DC DEF,DEF,0');
+
+
+
+fclose(FGEN); %spegniamo il generatore di funzione
+fclose(DMM); %spegniamo il multimetro 
+
+
+##### SOURCE END #####
+--></body></html>
